@@ -9,7 +9,6 @@ const app = express();
 app.use(express.json());
 app.use(cors())
 
-// customer
 app.use('/users' , userRouter);
 
 module.exports = app

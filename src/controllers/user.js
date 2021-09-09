@@ -1,18 +1,16 @@
 const PointsTransaction = require("../models/pointsTransaction");
 const User = require("../models/user");
+const jwt = require('jsonwebtoken');
 const { TOKEN_TYPE, PAGE_LIMIT, PENDING } = require("../utils/constants");
 const { sendPointsConfirmationMail } = require("../utils/Mailer");
 const { jsonRespnse } = require("../utils/response");
-const jwt = require('jsonwebtoken');
 const { getPaginationResponse } = require("../utils/pagination");
+const { validateTransferPoints } = require("../validators/userValidator");
 
 
 const login = async (req, res) => {
   try {
-    const user = await User.findByCredentials(
-      req.body.email,
-      req.body.password
-    );
+    const user = await User.findByCredentials(req.body.email,req.body.password);
     
     const token = await user.generateAuthToken();
     res.send(jsonRespnse({ data: { user, token , token_type : TOKEN_TYPE} }));
@@ -39,24 +37,15 @@ const transferPoints = async (req , res) => {
     const toUser = await User.findById(req.body.to);
     const fromUser = req.user;
     
-    if(!pointsToTransfer || pointsToTransfer > fromUser.points)
-    {
-      throw new Error('Not enough points to transfer');
-    }
-    
-    if(fromUser._id.toString() === toUser._id.toString())
-    {
-      throw new Error('Cannot send points to yourself.');
-    }
+    validateTransferPoints({pointsToTransfer , fromUser , toUser});
 
     const transaction = await PointsTransaction.transfer(fromUser , toUser._id , pointsToTransfer);
 
-    if(transaction && toUser)
+    if(transaction)
     {
       const confirmationToken = transaction.generateConfirmationToken()
-      await sendPointsConfirmationMail({to : toUser.email , fromEmail : fromUser.email , token : confirmationToken} , () => {
-        transaction.delete();
-      })
+      await sendPointsConfirmationMail({to : toUser.email , fromEmail : fromUser.email , token : confirmationToken} , () => transaction.delete())
+
       setTimeout(async () => {
         const trans = await PointsTransaction.findOne({_id : transaction._id , status : PENDING}).populate('from');
         if(trans)
@@ -64,6 +53,7 @@ const transferPoints = async (req , res) => {
           trans.declinePoints();
         }
       } , 600000)
+
     }
 
     res.status(200).send(
@@ -79,14 +69,14 @@ const confirmTransfer = async (req , res) => {
     const confirmToken = req.body.confirm_token;
 
     jwt.verify(confirmToken, process.env.JWT_SECRET_KEY , async (error , decoded) => {
-      if(error && error.name === 'TokenExpiredError') {
+      if(error && error.name === 'TokenExpiredError') { //expired
 
         const {transactionId} = jwt.verify(confirmToken, process.env.JWT_SECRET_KEY, {ignoreExpiration: true} );
         const transaction = await PointsTransaction.findOne({_id : transactionId , status : PENDING}).populate('from');
         if(transaction)
         {
           transaction.declinePoints();
-          return res.status(200).send(jsonRespnse({ data: transaction , message: "Points expired too late :(" }));
+          return res.status(200).send(jsonRespnse({ data: transaction , message: "Points expired, too late :(" }));
         }
       }
       else if(decoded){
