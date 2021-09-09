@@ -1,0 +1,240 @@
+{
+	"info": {
+		"_postman_id": "54ab426c-bd9a-4578-ad60-63ab4c5987c7",
+		"name": "Almatar task",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "With Auth",
+					"item": [
+						{
+							"name": "Transfer Points",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"to\" : \"6139b98f5355ca32e39403b7\",\n    \"points\" : 500\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/users/transfer",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"users",
+										"transfer"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Confirm Points Transfer",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"confirm_token\" : \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0cmFuc2FjdGlvbklkIjoiNjEzYTE2ODE0OTRiMmRjMWQ0NTgyMDgzIiwiaWF0IjoxNjMxMTk2ODAxLCJleHAiOjE2MzExOTY4NjF9.0fcDL5qBb4XZxX5nPnJSMLjXG103ronrXIr3zx8s-bY\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/users/confirm-transfer",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"users",
+										"confirm-transfer"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "User Points",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/users/points",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"users",
+										"points"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get User Transactions",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/users/transactions?page=1",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"users",
+										"transactions"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"auth": {
+						"type": "bearer",
+						"bearer": [
+							{
+								"key": "token",
+								"value": "{{token}}",
+								"type": "string"
+							}
+						]
+					},
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Without Auth",
+					"item": [
+						{
+							"name": "Login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const response = pm.response.json();",
+											"pm.test(\"Set Environments\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.data.token).to.be.an('string');",
+											"    pm.expect(jsonData.data.token).to.not.empty;",
+											"",
+											"    pm.environment.set(\"token\", response.data.token);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\" : \"talaatmedhat19@gmail.com\",\n    \"password\" : \"213123DS22\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/users/login",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"users",
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Signup",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const response = pm.response.json();",
+											"pm.test(\"Set Environments\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.data.token).to.be.an('string');",
+											"    pm.expect(jsonData.data.token).to.not.empty;",
+											"",
+											"    pm.environment.set(\"token\", response.data.token);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\" : \"talaatmedhat19@gmail.com\",\n    \"name\" : \"Talaat Gmail\",\n    \"password\" : \"213123DS22\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/users/signup",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"users",
+										"signup"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	]
+}
