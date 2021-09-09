@@ -1,18 +1,11 @@
-const Mongoose = require("mongoose");
 const PointsTransaction = require("../models/pointsTransaction");
 const User = require("../models/user");
 const { TOKEN_TYPE, PAGE_LIMIT, PENDING } = require("../utils/constants");
 const { sendPointsConfirmationMail } = require("../utils/Mailer");
 const { jsonRespnse } = require("../utils/response");
 const jwt = require('jsonwebtoken');
+const { getPaginationResponse } = require("../utils/pagination");
 
-const getLoggedIn = async (req, res) => {
-  try {
-    res.send(jsonRespnse({data : req.user}));
-  } catch (e) {
-    res.status(404).send(jsonRespnse({message : e.message}));
-  }
-};
 
 const login = async (req, res) => {
   try {
@@ -61,10 +54,16 @@ const transferPoints = async (req , res) => {
     if(transaction && toUser)
     {
       const confirmationToken = transaction.generateConfirmationToken()
-      console.log(confirmationToken);
-      // await sendPointsConfirmationMail({to : toUser.email , fromEmail : fromUser.email , token : confirmationToken} , () => {
-      //   transaction.delete();
-      // })
+      await sendPointsConfirmationMail({to : toUser.email , fromEmail : fromUser.email , token : confirmationToken} , () => {
+        transaction.delete();
+      })
+      setTimeout(async () => {
+        const trans = await PointsTransaction.findOne({_id : transaction._id , status : PENDING}).populate('from');
+        if(trans)
+        {
+          trans.declinePoints();
+        }
+      } , 600000)
     }
 
     res.status(200).send(
@@ -84,7 +83,6 @@ const confirmTransfer = async (req , res) => {
 
         const {transactionId} = jwt.verify(confirmToken, process.env.JWT_SECRET_KEY, {ignoreExpiration: true} );
         const transaction = await PointsTransaction.findOne({_id : transactionId , status : PENDING}).populate('from');
-        console.log(transactionId);
         if(transaction)
         {
           transaction.declinePoints();
@@ -109,11 +107,49 @@ const confirmTransfer = async (req , res) => {
   }
 }
 
+const getPoints = async (req , res) => {
+  try {
+    const user = req.user;
+    return res.status(200).send(jsonRespnse({ data: {points : user.points} , message: "" }));    
+  } catch (error) {
+    res.status(400).send(jsonRespnse({ message: error.message }));
+  }
+}
+
+const getTransactions = async (req , res) => {
+  try {
+    const user = req.user;
+    const limit = PAGE_LIMIT;
+    const page = (req.query.page || 1) - 1;
+    const filter = {
+      $or: [
+        { 'to': user._id },
+        { 'from': user._id },
+      ]
+    };
+
+    const transactions = await PointsTransaction.find(filter).populate('to from').skip(page * limit).limit(limit);
+
+    const total = await PointsTransaction.find(filter).count();
+
+    const pagination = getPaginationResponse(
+      total,
+      req.query.page,
+      limit,
+      total
+    );
+
+    return res.status(200).send(jsonRespnse({ data: {list : transactions , ...pagination} , message: "" }));    
+  } catch (error) {
+    res.status(400).send(jsonRespnse({ message: error.message }));
+  }
+}
 
 module.exports = {
-  getLoggedIn,
   login,
   signup,
   transferPoints,
-  confirmTransfer
+  confirmTransfer,
+  getPoints,
+  getTransactions
 };

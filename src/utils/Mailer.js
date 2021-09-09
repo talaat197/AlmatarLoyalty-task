@@ -36,7 +36,6 @@ const sendPointsConfirmationMail = ({ to , fromEmail , token , url = process.env
 
   transporter.sendMail(mailOptions, function (error, info) {
     if (error) {
-      console.log(error);
       onEmailFail(error);
     } else {
       console.log("Email sent: " + info.response);

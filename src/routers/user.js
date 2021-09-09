@@ -8,5 +8,7 @@ router.post('/login' , UserController.login)
 router.post('/signup' , UserController.signup)
 router.post('/transfer/' , auth , UserController.transferPoints)
 router.post('/confirm-transfer/' , auth , UserController.confirmTransfer)
+router.get('/points/' , auth , UserController.getPoints)
+router.get('/transactions/' , auth , UserController.getTransactions)
 
 module.exports = router

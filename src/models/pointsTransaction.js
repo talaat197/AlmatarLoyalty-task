@@ -54,7 +54,7 @@ pointsTransactionSchema.methods.generateConfirmationToken = function  (){
     const token = jwt.sign(
       { transactionId: transaction._id.toString() },
       process.env.JWT_SECRET_KEY,
-      {expiresIn : "1m"}
+      {expiresIn : "10m"}
     );
 
     return token;
@@ -78,10 +78,8 @@ pointsTransactionSchema.methods.confirmPoints = function (){
 
     return true;
   } catch (error) {
-    console.log(error);
     throw new Error(error)
   }
-
 }
 
 pointsTransactionSchema.methods.declinePoints = function (){
@@ -91,7 +89,6 @@ pointsTransactionSchema.methods.declinePoints = function (){
     transaction.status = EXPIRED;
 
     const fromUser = transaction.from;
-    console.log(fromUser);
     fromUser.points += transaction.points;
 
     transaction.save();
